@@ -1,0 +1,93 @@
+# rosbag containing the events and possibly ground truth data
+# can also contain keyframes
+bagfile: "data/dvs_recording3_2018-04-06-15-04-19.bag"
+
+# map to load
+# must be either a .ply (pointcloud) or a .obj (mesh)
+# remember to set the corresponding hand-eye calibration below!
+map: "data/room.ply"
+map_type: cloud # 'cloud', 'mesh' or 'auto'
+
+# settings related to the tracking itself
+tracking:
+    time_step: 20 # how much to advance from one tracking step to the next (in milliseconds)
+    event_count_density: 0.25 # how many events should be integrated? Actual count is density*number of pixels in a camera frame
+    export_dir: "/tmp/tracking_results/" # folder to write tracking results to (e.g. images, recovered trajectory, extracted ground truth, etc.)
+    #autostart: true # immediately launch tracking upon startup
+
+    method: 0 # see Method enum in optimization.h
+    use_numeric_diff: false
+
+    eventframe_initial_blur: 3 # 0 or odd number, size of blurring kernel
+
+# configuration of the image pyramid and solver options
+# each pyramid level contains settings such as blur or subset_fraction to configure the level
+# values from 'pyramid_defaults' are copied to every level
+# (not every pyramid level must necessarily be smaller than the previous one.
+# This allows for more complicated pipeline configurations.)
+pyramid_defaults:
+    # parameters for ceres
+    # see http://ceres-solver.org/nnls_solving.html for an explanation of those
+    solver_function_tolerance:  1e-5
+    solver_gradient_tolerance:  1e-8
+    solver_parameter_tolerance: 1e-7
+
+    subset_fraction: 1 # 0-1: how many pixels should be taken into account (1: all of them, 0.5: only the half that contribute most to the residual)
+    fix_velocity: false # if true, only position will be calculated during non-linear optimization
+    blur: 0 # not required, this is the default anyway, but shows how pyramid default values can be set here and overwritten below
+
+    # scale parameter for loss function
+    # see http://ceres-solver.org/nnls_modeling.html#_CPPv2N5ceres12LossFunctionE
+    # almost all residuals are < 0.01
+    loss_function_scaling: 0.002 # 0.01 # set to <0 to disable
+
+# values that are different for each level can be set in here
+# they will overwrite the values from pyramid_defaults (which in turn overwrite the hard-coded defaults)
+levels:
+    - resample:   0 # wheter or not the image size should be halved at this step
+      blur:       3 # amount of blur (size of kernel, must be odd or zero)
+      subset_fraction: 0.5
+      max_iterations: 10 # maximum amount of solver iterations at this step
+
+    - resample:   1
+      blur:       7
+      subset_fraction: 0.4
+
+    - resample:   1
+
+# camera intrinsics
+camera:
+    # limits for the renderer
+    # you want these as small as possible for maximum accuracy but still large
+    # enough that far away things won't be clipped
+    near: 1
+    far: 40
+    # intrinsics, lens distortion and extrinsics for IMU (T_camera_imu)
+    calibration: "data/calibration/IMU/results/camchain-imucam-.calibration_davis_intrinsics_imu.yaml"
+    # transformation between ground truth (motion capture system) and camera
+    hand_eye: "data/calibration/hand_eye/results/hand_eye.yaml"
+
+# optional, but handy ;)
+initial_pose:
+    pose:
+      translation:
+        y: -1.03771
+        x: 1.29999
+        z: -1.40259
+      rotation:
+        x: 0.07706440000000001
+        y: 0.09198720000000001
+        z: 0.130078
+        w: 0.984215
+    stamp:
+      nsec: 348400593
+      sec: 1523019860
+    motion:
+      rotation:
+        x: 0.161809
+        z: -0.146598
+        y: -0.0828545
+      velocity:
+        z: 0.388101
+        y: 0.7859660000000001
+        x: -0.42083

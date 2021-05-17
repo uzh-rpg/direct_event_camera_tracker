@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>direct_event_camera_tracker</name>
+  <version>1.0.0</version>
+  <description>Visual tracker using events and a photometric map.</description>
+
+  <maintainer email="samuelbryner@gmx.ch">Samuel Bryner</maintainer>
+  <license>GPLv3</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>roscpp</depend>
+  <depend>rosbag_storage</depend>
+  <depend>dvs_msgs</depend>
+  <depend>std_msgs</depend>
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+  <depend>yaml-cpp</depend>
+  <depend>cv_bridge</depend>
+  <depend>ceres_catkin</depend>
+  <depend>glog_catkin</depend>
+  <depend>assimp_catkin</depend>
+  <depend>sophus</depend>
+  <depend>pcl_ros</depend>
+  <depend>tf</depend>
+</package>

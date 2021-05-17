@@ -1,0 +1,21 @@
+repositories:
+  catkin_simple:
+    type: git
+    url: https://github.com/catkin/catkin_simple.git
+    version: master
+  ceres_catkin:
+    type: git
+    url: https://github.com/ethz-asl/ceres_catkin.git
+    version: master
+  glog_catkin:
+    type: git
+    url: https://github.com/ethz-asl/glog_catkin.git
+    version: master
+  assimp_catkin:
+    type: git
+    url: https://github.com/uzh-rpg/assimp_catkin.git
+    version: master
+  rpg_dvs_ros:
+    type: git
+    url: https://github.com/uzh-rpg/rpg_dvs_ros.git
+    version: master
