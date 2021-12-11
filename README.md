@@ -9,9 +9,10 @@ Nonlinear Optimization** by
 [Henri Rebecq](http://henri.rebecq.fr),
 and [Davide Scaramuzza](http://rpg.ifi.uzh.ch/people_scaramuzza.html).
 
-We provide a [pdf of the paper](http://rpg.ifi.uzh.ch/docs/ICRA19_Bryner.pdf) as well as a [dataset
-and video](http://rpg.ifi.uzh.ch/direct_event_camera_tracking/index.html). 
-The paper is a summary of Samuel's [MS thesis](doc/MS_thesis.pdf) (and [presentation](doc/MS_thesis_presentation.pdf)).
+We also provide the [paper](http://rpg.ifi.uzh.ch/docs/ICRA19_Bryner.pdf), 
+[poster](http://rpg.ifi.uzh.ch/docs/ICRA19_Bryner_poster.pdf), 
+[dataset and video](http://rpg.ifi.uzh.ch/direct_event_camera_tracking/index.html). 
+The paper is a summary of Samuel's [master thesis](doc/MS_thesis.pdf) and [presentation](doc/MS_thesis_presentation.pdf).
 If you use any of this code, please cite the following publication:
 
 ```bibtex
@@ -413,3 +414,11 @@ There are various python scripts which came in handy during development and migh
    visualization of a jittery trajectory.
 
  - `track_to_bag.py`: Convert a trajectory (CSV file) into a rosbag (PoseStamped messages) that can be played back.
+
+# Additional Resources on Event Cameras
+
+* [Event-based Vision Survey](http://rpg.ifi.uzh.ch/docs/EventVisionSurvey.pdf)
+* [List of Event-based Vision Resources](https://github.com/uzh-rpg/event-based_vision_resources)
+* [Event Camera Dataset](http://rpg.ifi.uzh.ch/davis_data.html)
+* [Event Camera Simulator](http://rpg.ifi.uzh.ch/esim)
+* [RPG research page on Event Cameras](http://rpg.ifi.uzh.ch/research_dvs.html)
