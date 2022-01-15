@@ -18,6 +18,7 @@ set(SOURCES
     gui/StateTable.cpp
     gui/render_jacobi_tester.cpp
     gui/general_jacobi_tester.cpp
+    gui/se3_pose_editor.cpp
     gui/evo_map_publisher.cpp
     utils/ceres.cpp
     opengl/world_renderer.cpp
@@ -71,6 +72,8 @@ find_package(Boost REQUIRED)
 #set(sophus_DIR "/usr/local/share/sophus/cmake/")
 #find_package(sophus REQUIRED)
 find_package(QCustomPlot REQUIRED)
+
+set(OpenGL_GL_PREFERENCE "LEGACY")
 find_package(OpenGL REQUIRED)
 find_package(PCL 1.7 REQUIRED)
 

@@ -74,7 +74,7 @@ void ImageLabel::setPixmap(cv::Mat mat, bool apply_colormap, bool normalize)
     } else if (mat.type() == CV_8UC3) {
 
         // Qt expects RGB, but OpenCV uses BGR
-        cv::cvtColor(mat, mat, CV_BGR2RGB);
+        cv::cvtColor(mat, mat, cv::COLOR_BGR2RGB);
 
         setPixmap(QPixmap::fromImage(QImage(
                         mat.data, mat.cols, mat.rows, mat.step, QImage::Format_RGB888)));

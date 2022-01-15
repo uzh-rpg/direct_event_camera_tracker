@@ -126,7 +126,7 @@ Scalar OptAnalytic::error(
         throw "Invalid pose for keyframe in forward warp optimization.";
     }
 
-    const Pose<Scalar> T_cam_world = T_world_cam(T_ref_cam.asVector()).inverse();
+    const Pose<Scalar> T_cam_world = T_world_cam_from_T_ref_cam(T_ref_cam.asVector()).inverse();
     const Pose<Scalar> T_world_kf  = params.keyframe.T_WK.pose.cast<Scalar>();
     const Pose<Scalar> T_cam_kf    = T_cam_world * T_world_kf;
 

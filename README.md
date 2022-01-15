@@ -68,7 +68,8 @@ update the pose and velocity until the mismatch is minimized.
 
 The software was originally developed and tested against **[ROS Kinetic
 Kame](http://wiki.ros.org/kinetic)** and **Ubuntu 16.04 (Xenial Xerus)**. It also runs on **[ROS
-Melodic Morenia](http://wiki.ros.org/melodic)** with **Ubuntu 18.04 (Bionic Beaver)**.
+Melodic Morenia](http://wiki.ros.org/melodic)** with **Ubuntu 18.04 (Bionic Beaver)** and
+**[ROS Noetic Ninjemys](wiki.ros.org/noetic)** with **Ubuntu 20.04 (Focal Fossa)**.
 
 Install [catkin tools](http://catkin-tools.readthedocs.org/en/latest/installing.html) and [vcstool](https://github.com/dirk-thomas/vcstool) if needed:
 
@@ -116,8 +117,9 @@ They are all available through the package management of Ubuntu and can be insta
 
 All the software is contained in a ROS package and can be built and run using catkin:
 
+    cd .. # should be in catkin_ws now
     catkin build direct_event_camera_tracker
-    source catkin_ws/devel/setup.bash
+    source devel/setup.bash
 
 To launch it, you need a running roscore. So in one terminal run
 
@@ -387,8 +389,20 @@ Clicking on the plot will select that pose.
 ### 6.5 Troubleshooting
 
  - Keep an eye on the console for warnings etc.
+
  - *ERROR: Failed to read depth from framebuffer.*
    Make sure your graphics drivers are working. This might not be the case when running inside a VM.
+
+ - "WARNING: Mesh has no textures associated!" For the atrium.obj model this can be ignored. It
+   contains multiple meshes, one of which does not have textures.
+
+ - *QOpenGLShader: Unable to open file "opengl/shaders/cloud_color.vert"
+   QOpenGLShader: Unable to open file "opengl/shaders/cloud_color.frag"
+   QOpenGLShaderProgram::uniformLocation(MVP): shader program is not linked
+   QOpenGLShaderProgram::uniformLocation(camera_pos): shader program is not linked*
+   The application needs shaders to render the map. It looks for these files in current working
+   directory, so you have to execute `roscd direct_event_camera_tracker` to change the working
+   directory to the application directory.
 
 <a name="scripts"></a>
 ## 7. Scripts

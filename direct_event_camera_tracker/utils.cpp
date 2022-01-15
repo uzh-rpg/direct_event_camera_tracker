@@ -30,6 +30,10 @@ void image_gradient(const cv::Mat& src, cv::Mat& dst)
 
     Mat grad_x, grad_y;
 
+    #if CV_MAJOR_VERSION >= 4
+    #define CV_SCHARR FILTER_SCHARR
+    #endif
+
     // calculate actual gradient (using a normalized kernel)
     // normalization factor is sum of elements for the smoothing part (16 for SCHARR)
     // times 1/2 for the finite differences due to employing central differences 

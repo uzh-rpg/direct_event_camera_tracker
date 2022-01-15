@@ -50,6 +50,20 @@ GeneralJacobiTester::GeneralJacobiTester(
     ui_cursor_x = new QLabel("X: ???", this); vert_layout->addWidget(ui_cursor_x);
     ui_cursor_y = new QLabel("Y: ???", this); vert_layout->addWidget(ui_cursor_y);
 
+    auto legend = new QLabel("<b>Legend:</b><br>"
+        "<span style=\"color: #00F;\">――</span> Error (L2-norm of residual)<br>"
+        "<span style=\"color: #88F; font-weight: bold;\">-----</span> Tangent to numerical derivative (from Jacobian)<br>"
+
+        "<span style=\"color: #F00;\">――</span> Numerical Derivative (from error)<br>"
+        "<span style=\"color: #F88; font-weight: bold;\">-----</span> Derivative from Jacobian (should match red numerical diff)<br>"
+        "<br>"
+        "<b>Interpretation:</b><br>"
+        "Thin, solid lines represent numerical (measured) values.<br>"
+        "Thick, dashed lines represent analytical values from Jacobian and should match the respective thin lines of the same color."
+        , this);
+    legend->setWordWrap(true);
+    vert_layout->addWidget(legend);
+
 
     ImageLabel* img_label = new ImageLabel(this);
     img_label->setPixmap(this->optim->getParams().keyframe.intensity);
@@ -92,6 +106,7 @@ GeneralJacobiTester::GeneralJacobiTester(
         layout->addWidget(plt->plt, attr_idx/3, attr_idx%3+1); // first colum is occupied by image
 
         connect(plt->plt, &QCustomPlot::mouseMove, [plt, this](QMouseEvent* e){ this->plot_mouse_move(*plt, e); });
+        connect(plt->plt, &QCustomPlot::mousePress, [plt, this](QMouseEvent* e){ this->plot_mouse_press(*plt, e); });
     }
 
     long int ns = timer.nsecsElapsed();
@@ -125,7 +140,10 @@ void GeneralJacobiTester::calculate_errors(Plot& plt)
     float deviation = plt.attr_idx < 6 ? mainui.dim1_dev->value() : mainui.dim2_dev->value();
 
     //cout << "calculating error for attr " << Statef::get_attr_names()[plt.attr_idx].toStdString()
-         //<< " (nr " << plt.attr_idx << ") at dim " << plt.pose_or_motion << " and idx " << plt.pm_local_idx << endl;
+         //<< " (nr " << plt.attr_idx << ")" << endl;
+
+    Eigen::Matrix<double,6,1> state_pos;
+    Eigen::Matrix<double,6,1> state_vel;
 
     double* params[] {
         state_pos.data(),
@@ -147,7 +165,14 @@ void GeneralJacobiTester::calculate_errors(Plot& plt)
             plt.data[i].xval = state_vel[plt.attr_idx-6];
         }
 
+        //cout << "      state: " << state_pos.transpose() << ", " << state_vel.transpose() << endl;
+        //for (size_t attr = 0; attr < 12; ++attr)
+            //cout << params[attr/6][attr%6] << ", ";
+        //cout << endl;
+
         cost_func->Evaluate(params, plt.data[i].residual, plt.data[i].jacobians);
+
+
 
         /*
         cout << plt.attr_idx << " sample " << i << " jacobian of px 0 and attr " << plt.attr_idx << " = " << plt.data[i].jacobians[plt.pose_or_motion][plt.pm_local_idx] << endl;
@@ -183,9 +208,9 @@ void GeneralJacobiTester::plot(Plot& plt, boost::function<double(Plot&, int)> f,
         double err = f(plt, i);
 
         if (isnan(err) || isinf(err)) {
-            cerr << "WARNING: Invalid correlation " << i << " / " << plt.samples << " at position: " << err << endl;
+            cerr << "WARNING: Invalid plot value " << i << " / " << plt.samples << " at position: " << err << endl;
             //cerr << T_CK;
-            yvals[i] = 0;
+            yvals[i] = NAN;
         } else {
             yvals[i] = err;
             //cout << dim << ", " << idx << ", " << i << " = " << val << ": " << err << endl;
@@ -219,10 +244,10 @@ void GeneralJacobiTester::plot_tangent(Plot& plt, float slope, float ycenter)
     yvals[2] = ycenter + (xvals[2]-xvals[1])*slope;
 
     /*
-    cout << "plotting tangent of attr " << Statef::get_attr_names()[plt.attr_idx].toStdString() << " with slope = " << slope << " and ycenter = " << ycenter << ":\n";
-    cout << "xvals[0]: " << xvals[0] << " \t yvals[0]: " << yvals[0] << endl;
-    cout << "xvals[1]: " << xvals[1] << " \t yvals[1]: " << yvals[1] << endl;
-    cout << "xvals[2]: " << xvals[2] << " \t yvals[2]: " << yvals[2] << endl;
+    cout << "plotting tangent of attr " << plt.attr_idx << " with slope = " << slope << " and ycenter = " << ycenter << ":\n";
+    cout << "  xvals[0]: " << xvals[0] << " \t yvals[0]: " << yvals[0] << endl;
+    cout << "  xvals[1]: " << xvals[1] << " \t yvals[1]: " << yvals[1] << endl;
+    cout << "  xvals[2]: " << xvals[2] << " \t yvals[2]: " << yvals[2] << endl;
     */
 
     plt.plt->graph(2)->setData(xvals, yvals);
@@ -243,6 +268,8 @@ void GeneralJacobiTester::plot_total_err(Plot& plt)
             double v = p.data[sample].residual[k];
             err += v * v;
         }
+        // why no err=sqrt(err)?
+
         total_residual[sample] = err;
         return err;
     }, 0);
@@ -310,7 +337,10 @@ void GeneralJacobiTester::add_point(const PlotPoint& s, bool fading)
 {
     for (Plot* plt: plots) {
         QCPItemStraightLine* line = new QCPItemStraightLine(plt->plt);
+
+#if QCUSTOMPLOT_VERSION < 0x020000
         plt->plt->addItem(line);
+#endif
 
         float xval = s.pos.attr(plt->attr_idx); // TODO: handle different parameter layout of OptRerenderer
 
@@ -359,17 +389,45 @@ void GeneralJacobiTester::clear_points()
 
 ////////////////////////////////////////////////////////////////////////////////
 
-void GeneralJacobiTester::plot_mouse_move(Plot& plt, QMouseEvent* event)
+Statef GeneralJacobiTester::get_state_from_plot(Plot& plt, QPoint pos)
 {
     Statef state = optim->getParams().initial_state;
-    double xpos = plt.plt->xAxis->pixelToCoord(event->pos().x());
-    double ypos = plt.plt->yAxis->pixelToCoord(event->pos().y());
+    double xpos = plt.plt->xAxis->pixelToCoord(pos.x());
+    double ypos = plt.plt->yAxis->pixelToCoord(pos.y());
 
-    state.attr(plt.attr_idx) = xpos;
-    emit stateHovered(state);
+    if (plt.attr_idx < 6)
+    {
+        // position & orientation is relative to reference pose!
+        // convert back to absolute one
+
+        Vector6d v(0);
+        v[plt.attr_idx] = xpos;
+
+        state.pose = Posef( optim->T_world_cam_from_T_ref_cam(v) );
+    }
+    else
+    {
+        state.attr(plt.attr_idx + 1) = xpos;
+    }
 
     ui_cursor_x->setText("X: " + QString::number(xpos));
     ui_cursor_y->setText("Y: " + QString::number(ypos));
+
+    return state;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void GeneralJacobiTester::plot_mouse_move(Plot& plt, QMouseEvent* event)
+{
+    emit stateHovered(get_state_from_plot(plt, event->pos()));
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void GeneralJacobiTester::plot_mouse_press(Plot& plt, QMouseEvent* event)
+{
+    emit stateSelected(get_state_from_plot(plt, event->pos()));
 }
 
 ////////////////////////////////////////////////////////////////////////////////

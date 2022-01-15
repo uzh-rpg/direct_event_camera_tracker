@@ -96,6 +96,9 @@ struct Plot {
         plt->addGraph(); // tangent
         plt->addGraph(); // derivative
 
+        // err
+        plt->graph(0)->setPen(QPen(Qt::blue));
+
         // err derivative
         plt->graph(1)->setPen(QPen(Qt::red));
 
@@ -116,7 +119,20 @@ struct Plot {
 
         // add title
         plt->plotLayout()->insertRow(0);
-        plt->plotLayout()->addElement(0, 0, new QCPPlotTitle(plt, Statef::get_attr_names()[attr_idx]));
+
+        // Statef has 13 parameters because orientation is stored as quaternion (4d), but
+        // optimization is using 12 by storing orientation relative to a reference pose as SE3.
+        QString attr_name;
+        if (attr_idx < 6)
+            attr_name = "Relative " + Statef::get_attr_names()[attr_idx];
+        else
+            attr_name = Statef::get_attr_names()[attr_idx+1];
+
+        #if QCUSTOMPLOT_VERSION >= 0x020000
+        #define QCPPlotTitle QCPTextElement
+        #endif
+
+        plt->plotLayout()->addElement(0, 0, new QCPPlotTitle(plt, attr_name));
     }
 
     // no copies please!
@@ -137,8 +153,11 @@ public:
 
     ~GeneralJacobiTester();
 
+    Statef get_state_from_plot(Plot& plt, QPoint pos);
+
 signals:
     void stateHovered (const Statef& s);
+    void stateSelected (const Statef& s);
 
 public slots:
     void add_point(const PlotPoint& s, bool fading = false);
@@ -146,6 +165,7 @@ public slots:
 
     void plot_total_err_for_all();
     void plot_mouse_move(Plot& plt, QMouseEvent* event);
+    void plot_mouse_press(Plot& plt, QMouseEvent* event);
 
     void show_specific_pixel(float x, float y);
 
@@ -171,8 +191,6 @@ private:
     std::unique_ptr<IOptimization> optim;
 
 
-    Eigen::Matrix<double,6,1> state_pos;
-    Eigen::Matrix<double,6,1> state_vel;
     ceres::CostFunction* cost_func;
 
     std::vector<Plot*> plots;

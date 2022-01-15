@@ -19,7 +19,7 @@ OptFwdWarp::OptFwdWarp(const OptParams& params)
     kf_depth_interpolater(kf_depth_ceres)
 {
     // calculate approximate threshold so that count( |gradient| > threshold ) is subset_fraction*total_count
-    // TODO: think this trhough: Shouldn't we actually look at the second derivative?
+    // TODO: think this through: Shouldn't we actually look at the second derivative?
     subset_grad_thresh = find_threshold(params.keyframe.gradient, params.pyramid_lvl.subset_fraction, subset_count, params.keyframe.depth);
 }
 
@@ -100,9 +100,23 @@ Scalar OptFwdWarp::error(
         throw "Invalid pose for keyframe in forward warp optimization.";
     }
 
-    const Pose<Scalar> T_cam_world = T_world_cam(T_ref_cam.asVector()).inverse();
+    const auto T_cam_world_raw = T_world_cam_from_T_ref_cam(T_ref_cam.asVector()).inverse();
+    const Pose<Scalar> T_cam_world(
+        Eigen::Translation<Scalar, 3>(T_cam_world_raw.translation()),
+        Eigen::Quaternion<Scalar>(T_cam_world_raw.linear())
+    );
     const Pose<Scalar> T_world_kf  = params.keyframe.T_WK.pose.cast<Scalar>();
     const Pose<Scalar> T_cam_kf    = T_cam_world * T_world_kf;
+
+
+#if 0
+    std::cout << "--------------------------------------------------------------------------------" << std::endl;
+    std::cout << "T_ref_cam: " << T_ref_cam << std::endl;
+    std::cout << "T_cam_world: " << T_cam_world << std::endl;
+    std::cout << "T_world_kf: " << T_world_kf << std::endl;
+    std::cout << "T_cam_kf: " << T_cam_kf << std::endl;
+    std::cout << "--------------------------------------------------------------------------------" << std::endl;
+#endif
 
 
     // distortion parameters
@@ -272,17 +286,19 @@ Scalar OptFwdWarp::error(
 
             residual_idx++;
             if (residual_idx >= subset_count) {
-                goto end_of_mainloop; // wheeee, the raptors are coming!
+                goto end_of_mainloop; // ayeee, the raptors are coming!
             }
         }
     }
     __t_innerloop.stop();
 
     if (residual_idx < 100) {
-        std::cerr << "ERROR: only got " << residual_idx << " residuals!" << std::endl;
+        std::cerr << "ERROR: only got " << residual_idx << " residuals out of " << subset_count << "!" << std::endl;
     }
 
     // fill up the remaining entries
+    // TODO: shouldn't we be able to tell ceres that we have less rows than anticipated, so there's
+    // less to calculate?
     for (; residual_idx < subset_count; residual_idx++) {
         if (residual != nullptr) {
             residual[residual_idx] = Scalar(0);

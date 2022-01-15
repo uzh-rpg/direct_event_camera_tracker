@@ -41,6 +41,8 @@ enum MapType {
     CLOUD
 };
 
+std::ostream& operator<<(std::ostream& os, const MapType& map_type);
+
 struct CloudVertex
 {
     Eigen::Vector3f position,

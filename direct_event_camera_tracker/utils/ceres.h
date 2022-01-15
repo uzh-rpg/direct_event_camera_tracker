@@ -204,7 +204,7 @@ std::ostream& operator<<(std::ostream& os, const Eigen::Matrix<ceres::Jet<T,N>,R
 
     for (size_t r = 0; r < R; r++) {
         os << "\t";
-        for (size_t c = 0; c < R; c++) {
+        for (size_t c = 0; c < C; c++) {
             os << jetV(r,c) << " ";
             //os << "Jet<" << type_name<T>() << ", " << N << ">(" << jet.a << ")";
         }
