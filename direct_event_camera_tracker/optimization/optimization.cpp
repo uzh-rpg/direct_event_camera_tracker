@@ -60,7 +60,7 @@ void IOptimization::init_optimization(Vector6d& T_ref_cam, Vector6d& V_cam)
 
 Statef IOptimization::finish_optimization(Vector6d& T_ref_cam, Vector6d& V_cam)
 {
-    return Statef(params.initial_state.stamp, Posef(T_world_cam(T_ref_cam)), Motionf(V_cam));
+    return Statef(params.initial_state.stamp, Posef(T_world_cam_from_T_ref_cam(T_ref_cam)), Motionf(V_cam));
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -198,19 +198,23 @@ std::unique_ptr<IOptimization> IOptimization::create(const OptParams& params)
 {
     switch (params.method) {
         case OptParams::Method::FORWARD_WARP:
+            //cout << "creating FORWARD_WARP optimizer" << endl;
             return std::make_unique<OptFwdWarp>(params);
 
         case OptParams::Method::RERENDER:
+            //cout << "creating RERENDER optimizer" << endl;
             return std::make_unique<OptRerender>(params);
 
         case OptParams::Method::ANALYTIC:
+            //cout << "creating ANALYTIC optimizer" << endl;
             return std::make_unique<OptAnalytic>(params);
 
         case OptParams::Method::DEBUG:
+            //cout << "creating DEBUG optimizer" << endl;
             return std::make_unique<OptDebug>(params);
 
         default:
-            throw "Invalid optimization method.";
+            throw std::runtime_error("Invalid optimization method.");
     }
 }
 
@@ -222,7 +226,7 @@ ceres::CallbackReturnType OptimizationCallback::operator()(const ceres::Iteratio
 {
     UNUSED(summary);
 
-    Statef state(opt.getParams().initial_state.stamp, Posef(opt.T_world_cam(T_ref_cam)), Motionf(V_cam));
+    Statef state(opt.getParams().initial_state.stamp, Posef(opt.T_world_cam_from_T_ref_cam(T_ref_cam)), Motionf(V_cam));
 
     callback(state);
 

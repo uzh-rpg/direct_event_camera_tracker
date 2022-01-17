@@ -93,10 +93,8 @@ public:
 
     const OptParams& getParams() const { return params; }
 
-    double& state(size_t attr_idx);
-
     template <typename Scalar>
-    Eigen::Transform<Scalar, 3, Eigen::Isometry> T_world_cam(const Eigen::Matrix<Scalar,6,1> T_ref_cam) const
+    Eigen::Transform<Scalar, 3, Eigen::Isometry> T_world_cam_from_T_ref_cam(const Eigen::Matrix<Scalar,6,1> T_ref_cam) const
     {
         Eigen::Transform<Scalar, 3, Eigen::Isometry> T_WC = T_world_ref.T().cast<Scalar>();
         T_WC *= Sophus::SE3<Scalar>::exp(T_ref_cam).matrix();
@@ -157,6 +155,8 @@ public:
     template <typename Scalar>
     bool operator()(const Scalar* const p, const Scalar* const v, Scalar* residual) const
     {
+        // p is 6 dimensional!
+
         Motion<Scalar> pose_rel(p);
         Motion<Scalar> motion(v);
 

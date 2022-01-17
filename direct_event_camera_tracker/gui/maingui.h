@@ -32,6 +32,7 @@
 #include "gui/render_jacobi_tester.h"
 #include "gui/general_jacobi_tester.h"
 #include "gui/evo_map_publisher.h"
+#include "gui/se3_pose_editor.h"
 #include "pyramid.h"
 #include "opengl/world_renderer.h"
 #include "point_yaml.h"
@@ -153,6 +154,7 @@ private slots:
     void sweep_event_density();
     void calc_mean_scene_depth();
     void plot_trajectory();
+    void show_SE3_pose_editor();
 
     void open_evo_map_publisher();
 

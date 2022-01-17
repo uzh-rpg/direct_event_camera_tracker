@@ -4,6 +4,22 @@ using namespace std;
 
 ////////////////////////////////////////////////////////////////////////////////
 
+std::ostream& operator<<(std::ostream& os, const MapType& map_type)
+{
+    switch (map_type) {
+        case AUTO: os << "AUTO"; break;
+        case AUTOSHADE_MESH: os << "AUTOSHADE_MESH"; break;
+        case SHADED_MESH: os << "SHADED_MESH"; break;
+        case UNSHADED_MESH: os << "UNSHADED_MESH"; break;
+        case CLOUD: os << "CLOUD"; break;
+        default: os << "UNKNOWN MAP TYPE"; break;
+    }
+
+    return os;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
 WorldRenderer::WorldRenderer(QWidget* parent, const CameraIntrinsics& c)
     : QOpenGLWidget(parent), camera(c),
     map_type(MapType::AUTO),
@@ -38,6 +54,9 @@ void WorldRenderer::initializeGL()
     f->glEnable(GL_PROGRAM_POINT_SIZE); // we want to render our points bigger if they are closer
 
     f->glViewport(0, 0, camera.getCameraWidth(), camera.getCameraHeight());
+
+    // show OpenGL information
+    qDebug() << "OpenGL format:" << QOpenGLContext::currentContext()->format();
 
     // draw circles instead of squares
     /*
@@ -272,12 +291,20 @@ void WorldRenderer::loadMesh(const std::string file)
     // set up shader for mesh
     ////////////////////////////////////////////////////////////////////////////
 
-    if (model.hasNormals() && (map_type == SHADED_MESH || map_type == AUTOSHADE_MESH)) {
+    if (map_type == MapType::CLOUD)
+    {
+        cerr << "ERROR: We're loading a mesh, but map type was set to 'CLOUD'. This should not happen!" << endl;
+        map_type = MapType::AUTOSHADE_MESH;
+    }
+
+    if (model.hasNormals() && (map_type != UNSHADED_MESH)) {
         cout << "model has normals, enabling shading" << endl;
         mesh_shader.addShaderFromSourceFile(QOpenGLShader::Vertex,   "opengl/shaders/shaded_mesh.vert");
         mesh_shader.addShaderFromSourceFile(QOpenGLShader::Fragment, "opengl/shaders/shaded_mesh.frag");
     } else {
-        if (map_type == SHADED_MESH) {
+        if (model.hasNormals()) {
+            cout << "Model has normals, but map type is set to " << map_type << ", so shading will be disabled." << endl;
+        } else if (map_type != UNSHADED_MESH) {
             cerr << "WARNING: model has no normals, disabling shading" << endl;
         }
         mesh_shader.addShaderFromSourceFile(QOpenGLShader::Vertex,   "opengl/shaders/mesh.vert");

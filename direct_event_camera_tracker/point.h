@@ -280,8 +280,8 @@ template <typename Scalar>
 std::ostream& operator<<(std::ostream& out, const Pose<Scalar>& p)
 {
     out << "  Pose:" << std::endl;
-    out << "\tPosition: " << p.position.vector().transpose() << std::endl;
-    out << "\tOrientation: " << p.orientation.coeffs().transpose() << std::endl;
+    out << "\tPosition: " << std::endl << p.position.vector().transpose() << std::endl;
+    out << "\tOrientation: " << std::endl << p.orientation.coeffs().transpose() << std::endl;
     return out;
 }
 

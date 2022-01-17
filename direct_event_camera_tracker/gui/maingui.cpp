@@ -18,6 +18,8 @@ MainGUI::MainGUI(const YAML::Node& config)
     plot_matrix(new PlotMatrix(*this)),
     last_published_pose_marker_id(0)
 {
+    std::cout << "Eigen Version: " << EIGEN_WORLD_VERSION << "." << EIGEN_MAJOR_VERSION << "." << EIGEN_MINOR_VERSION << std::endl;
+
     ui.setupUi(this);
 
     ui.opt_param_pane->setFloating(true);
@@ -138,6 +140,7 @@ MainGUI::MainGUI(const YAML::Node& config)
     plot_button_menu->addAction("sweep event density", this, SLOT(sweep_event_density()));
     plot_button_menu->addAction("calc mean scene depth", this, SLOT(calc_mean_scene_depth()));
     plot_button_menu->addAction("plot trajectory in color", this, SLOT(plot_trajectory()));
+    plot_button_menu->addAction("SE(3) pose editor", this, SLOT(show_SE3_pose_editor()));
     ui.plot_button->setMenu(plot_button_menu);
 
     QMenu* minimization_button_menu = new QMenu(this);
@@ -1222,6 +1225,7 @@ void MainGUI::test_general_jacobian()
     jacobi_tester->show();
 
     connect(jacobi_tester, &GeneralJacobiTester::stateHovered, this, &MainGUI::hover_pose);
+    connect(jacobi_tester, &GeneralJacobiTester::stateSelected, this, &MainGUI::select_pose);
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -1418,6 +1422,19 @@ void MainGUI::plot_trajectory()
 
     world_renderer->cleanupHiresRendering();
     cout << "done" << endl;
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+void MainGUI::show_SE3_pose_editor()
+{
+    // no need to delete previous panel, Qt will clean it up
+
+    auto dialog = new SE3PoseEditor(this);
+    dialog->setReferencePose(get_T_WC_selected());
+    dialog->show();
+
+    connect(dialog, &SE3PoseEditor::stateSelected, this, &MainGUI::hover_pose);
 }
 
 ////////////////////////////////////////////////////////////////////////////////
